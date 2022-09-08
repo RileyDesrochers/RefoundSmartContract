@@ -11,101 +11,49 @@ const {
     // and reset Hardhat Network to that snapshot in every test.
     async function deployContract() {
     
-        // Contracts are deployed using the first signer/account by default
-        const [owner, otherAccount] = await ethers.getSigners();
-    
-        const Refound = await ethers.getContractFactory("Refound");
-        const refound = await Refound.deploy();
-        console.log('contract deployed')
-        return refound;
+      // Contracts are deployed using the first signer/account by default
+      const [owner, otherAccount] = await ethers.getSigners();
+  
+      const Refound = await ethers.getContractFactory("Refound");
+      const refound = await Refound.deploy();
+      const RefoundPost = await ethers.getContractFactory("RefoundPost");
+      const refoundPost = await RefoundPost.deploy(refound.address);
+      await refound.changeAddresses(refoundPost.address);
+      await refound.deployed();
+      await refoundPost.deployed();
+      console.log('contract deployed')
+      return {refound, refoundPost};
     }
   
     describe("DeployContract", function () {
-        it("test contract deployment", async function () {
-        const refound = await loadFixture(deployContract);
-    
-            await refound.deployed();
-            expect(await refound.name()).to.equal("Refound");
-            expect(await refound.symbol()).to.equal("FOUND");
-        });
+      it("test contract deployment", async function () {
+        const {refound, refoundPost} = await loadFixture(deployContract);
+
+        expect(await refound.name()).to.equal("RefoundUser");
+        expect(await refound.symbol()).to.equal("FOUNDU");
+        expect(await refoundPost.name()).to.equal("RefoundPost");
+        expect(await refoundPost.symbol()).to.equal("FOUNDP");
+      });
     });
-    
     describe("MintProfile", function () {
-        it("test profile creation", async function () {
-        const refound = await loadFixture(deployContract);
-    
-            await refound.deployed();
-            await refound.makeRefoundProfile("profileName", "{(ツ)}");//tokenURI
-            expect(await refound.profiles()).to.equal(1);
-            expect(await refound.tokenURI(0)).to.equal('{"Handle": profileName, "ProfileData": {(ツ)}}');
-        });
-    });
-    /*
-    describe("Withdrawals", function () {
-      describe("Validations", function () {
-        it("Should revert with the right error if called too soon", async function () {
-          const { lock } = await loadFixture(deployContract);
-  
-          await expect(lock.withdraw()).to.be.revertedWith(
-            "You can't withdraw yet"
-          );
-        });
-  
-        it("Should revert with the right error if called from another account", async function () {
-          const { lock, unlockTime, otherAccount } = await loadFixture(
-            deployContract
-          );
-  
-          // We can increase the time in Hardhat Network
-          await time.increaseTo(unlockTime);
-  
-          // We use lock.connect() to send a transaction from another account
-          await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-            "You aren't the owner"
-          );
-        });
-  
-        it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-          const { lock, unlockTime } = await loadFixture(
-            deployContract
-          );
-  
-          // Transactions are sent using the first signer by default
-          await time.increaseTo(unlockTime);
-  
-          await expect(lock.withdraw()).not.to.be.reverted;
-        });
-      });
-  
-      describe("Events", function () {
-        it("Should emit an event on withdrawals", async function () {
-          const { lock, unlockTime, lockedAmount } = await loadFixture(
-            deployContract
-          );
-  
-          await time.increaseTo(unlockTime);
-  
-          await expect(lock.withdraw())
-            .to.emit(lock, "Withdrawal")
-            .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
-        });
-      });
-  
-      describe("Transfers", function () {
-        it("Should transfer the funds to the owner", async function () {
-          const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-            deployContract
-          );
-  
-          await time.increaseTo(unlockTime);
-  
-          await expect(lock.withdraw()).to.changeEtherBalances(
-            [owner, lock],
-            [lockedAmount, -lockedAmount]
-          );
-        });
+      it("test profile creation", async function () {
+        const {refound, refoundPost} = await loadFixture(deployContract);
+
+        await refound.makeRefoundProfile("profileName", "{(ツ)}");//tokenURI
+        expect(await refound.profiles()).to.equal(1);
+        expect(await refound.tokenURI(0)).to.equal('{"Handle": profileName, "ProfileData": {(ツ)}}');
       });
     });
-    */
+    describe("MintPost", function () {
+      it("test profile creation", async function () {
+        const {refound, refoundPost} = await loadFixture(deployContract);
+
+        await refound.makeRefoundProfile("profileName", "{(ツ)}");//tokenURI
+        await refound.makeRefoundPost(0, "{(ツ)}");//tokenURI
+        expect(await refoundPost.posts()).to.equal(1);
+        //console.log(await refoundPost.tokenURI(0))
+        expect(await refoundPost.tokenURI(0)).to.equal('{"posterID": 0, "postData": {(ツ)}}');
+      });
+    });
   });
   

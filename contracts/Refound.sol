@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 //import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
+import "contracts/RefoundPost.sol";
 // We need to import the helper functions from the contract that we copy/pasted.
 
 // We inherit the contract we imported. This means we'll have access
@@ -16,11 +17,19 @@ contract Refound is ERC721URIStorage {
     //using Counters for Counters.Counter;
     //Counters.Counter private _tokenIds;
     uint256 public profiles;
+    address public owner;
+    RefoundPost public postContract;
+    //address public mediaData;
 
     // We need to pass the name of our NFTs token and its symbol.
-    constructor() ERC721 ("Refound", "FOUND") {
-        //console.log("This is my NFT contract. Woah!");
+    constructor() ERC721 ("RefoundUser", "FOUNDU") {
         profiles = 0;
+        owner = msg.sender;
+    }
+
+    function changeAddresses(address _postContract/*, address _mediaData*/) external {
+        require(owner == msg.sender, "only the contract owner can call this function");//FIX make modifer
+        postContract = RefoundPost(_postContract);
     }
 
     // A function our user will hit to get their NFT.
@@ -45,5 +54,10 @@ contract Refound is ERC721URIStorage {
         _setTokenURI(profileID, tokenURI);
         console.log("minted Profile NFT", profileID, msg.sender, tokenURI);
         return profileID;
+    }
+
+    function makeRefoundPost(uint256 profileID, string memory postData) public returns(uint256){
+        require(this.ownerOf(profileID) == msg.sender, 'you need two own a profile to make a post from it');
+        return postContract.makeRefoundPost(profileID, postData, msg.sender);//FIX how does this contract know what the others address is?
     }
 }

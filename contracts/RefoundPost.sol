@@ -19,21 +19,21 @@ contract RefoundPost is ERC721URIStorage {
     address public refound;
 
     // We need to pass the name of our NFTs token and its symbol.
-    constructor(address _refound) ERC721 ("RefoundPost", "FND") {
+    constructor(address _refound) ERC721 ("RefoundPost", "FOUNDP") {
         refound = _refound;
         posts = 0;
     }
 
     // A function our user will hit to get their NFT.
-    function makeRefoundPost(uint256 profileID, string memory postData) external returns(uint256){
+    function makeRefoundPost(uint256 profileID, string memory postData, address postOwner) external returns(uint256){
 
-        require(msg.sender == refound, "handle to long");//FIX this and turn into modifier
+        require(msg.sender == refound, "only the refound contract can make a post");//FIX this and turn into modifier
         // Get the current tokenId, this starts at 0.
         uint256 postID = posts++;
         
         string memory tokenURI = string(
             abi.encodePacked(
-                '{"PosterID": ',
+                '{"posterID": ',
                 Strings.toString(profileID),
                 ', "postData": ',
                 postData,
@@ -41,11 +41,11 @@ contract RefoundPost is ERC721URIStorage {
             )
         );
         
-        _safeMint(msg.sender, postID);
+        _safeMint(postOwner, postID);
 
         // Set the NFTs data.
         _setTokenURI(profileID, tokenURI);
-        console.log("minted post NFT", postID, msg.sender, tokenURI);
-        return profileID;
+        console.log("minted post NFT", postID, postOwner, tokenURI);
+        return postID;
     }
 }

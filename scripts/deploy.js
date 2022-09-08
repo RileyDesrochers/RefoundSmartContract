@@ -8,13 +8,16 @@ const hre = require("hardhat");
 
 async function main() {
 
-  const Refound = await hre.ethers.getContractFactory("Refound");
+  const Refound = await ethers.getContractFactory("Refound");
   const refound = await Refound.deploy();
-
+  const RefoundPost = await ethers.getContractFactory("RefoundPost");
+  const refoundPost = await RefoundPost.deploy(refound.address);
+  await refound.changeAddresses(refoundPost.address);
   await refound.deployed();
+  await refoundPost.deployed();
 
   console.log(
-    `contract deployed to ${refound.address}`
+    `Refound contract deployed to ${refound.address} and RefoundPost contract deployed to ${refoundPost.address}`
   );
 }
 
