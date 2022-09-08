@@ -25,18 +25,18 @@ contract RefoundPost is ERC721URIStorage {
     }
 
     // A function our user will hit to get their NFT.
-    function makeRefoundPost(uint256 profileID, string memory postData) public returns(uint256){
+    function makeRefoundPost(uint256 profileID, string memory postData) external returns(uint256){
 
-        require(msg.sender == refound, "handle to long");//fix this and turn into modifier
+        require(msg.sender == refound, "handle to long");//FIX this and turn into modifier
         // Get the current tokenId, this starts at 0.
         uint256 postID = posts++;
         
         string memory tokenURI = string(
             abi.encodePacked(
-                '{"Handle": ',
-                handle,
-                ', "ProfileData": ',
-                profileData,
+                '{"PosterID": ',
+                Strings.toString(profileID),
+                ', "postData": ',
+                postData,
                 '}'
             )
         );
