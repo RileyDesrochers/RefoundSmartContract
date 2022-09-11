@@ -12,10 +12,13 @@ async function main() {
   const refound = await Refound.deploy();
   const RefoundPost = await ethers.getContractFactory("RefoundPost");
   const refoundPost = await RefoundPost.deploy(refound.address);
-  await refound.changeAddresses(refoundPost.address);
   await refound.deployed();
+  await refound.changeAddresses(refoundPost.address);
   await refoundPost.deployed();
-
+  await refoundPost.updatePrice(0, 100);
+  await refoundPost.updatePrice(1, 250);
+  await refoundPost.updatePrice(2, 1000);
+  await refoundPost.updatePrice(3, 20000);
   console.log(
     `Refound contract deployed to ${refound.address} and RefoundPost contract deployed to ${refoundPost.address}`
   );

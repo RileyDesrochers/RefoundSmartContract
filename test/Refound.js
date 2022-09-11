@@ -18,16 +18,21 @@ const {
       const refound = await Refound.deploy();
       const RefoundPost = await ethers.getContractFactory("RefoundPost");
       const refoundPost = await RefoundPost.deploy(refound.address);
-      await refound.changeAddresses(refoundPost.address);
       await refound.deployed();
+      await refound.changeAddresses(refoundPost.address);
       await refoundPost.deployed();
+      await refoundPost.updatePrice(0, 100);
+      await refoundPost.updatePrice(1, 250);
+      await refoundPost.updatePrice(2, 1000);
+      await refoundPost.updatePrice(3, 20000);
       console.log('contract deployed')
-      return {refound, refoundPost};
+      //console.log('addresses: ', owner.address, ', ', otherAccount.address)
+      return {refound, refoundPost, owner};
     }
   
     describe("DeployContract", function () {
       it("test contract deployment", async function () {
-        const {refound, refoundPost} = await loadFixture(deployContract);
+        const {refound, refoundPost, owner} = await loadFixture(deployContract);
 
         expect(await refound.name()).to.equal("RefoundUser");
         expect(await refound.symbol()).to.equal("FOUNDU");
@@ -37,7 +42,7 @@ const {
     });
     describe("MintProfile", function () {
       it("test profile creation", async function () {
-        const {refound, refoundPost} = await loadFixture(deployContract);
+        const {refound, refoundPost, owner} = await loadFixture(deployContract);
 
         await refound.makeRefoundProfile("profileName", "{(ツ)}");//tokenURI
         expect(await refound.profiles()).to.equal(1);
@@ -46,13 +51,25 @@ const {
     });
     describe("MintPost", function () {
       it("test profile creation", async function () {
-        const {refound, refoundPost} = await loadFixture(deployContract);
+        const {refound, refoundPost, owner} = await loadFixture(deployContract);
 
         await refound.makeRefoundProfile("profileName", "{(ツ)}");//tokenURI
         await refound.makeRefoundPost(0, "{(ツ)}");//tokenURI
         expect(await refoundPost.posts()).to.equal(1);
-        //console.log(await refoundPost.tokenURI(0))
         expect(await refoundPost.tokenURI(0)).to.equal('{"posterID": 0, "postData": {(ツ)}}');
+      });
+    });
+    describe("purchaseLicense", function () {
+      it("test license purchase", async function () {
+        const {refound, refoundPost, owner} = await loadFixture(deployContract);
+
+        await refound.makeRefoundProfile("profileName", "{(ツ)}");//tokenURI
+        await refound.makeRefoundPost(0, "{(ツ)}");//tokenURI
+        await refound.makeRefoundPost(0, "{(-ツ-)}");//tokenURI
+        await refoundPost.purchaseLicense(1, 3);
+        var license = await refoundPost.getLicensesByAddress(owner.address);
+        expect(license[0][0]).to.equal(1);
+        expect(license[0][1]).to.equal(3);
       });
     });
   });
