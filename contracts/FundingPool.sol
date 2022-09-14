@@ -57,7 +57,7 @@ contract FundingPool {
         maxDuration = _maxDuration;
     }
 
-    function launch(uint _goal, string title, string description, string imageLink, uint32 _startAt, uint32 _endAt) external {
+    function launch(uint _goal, string _title, string _description, string _imageLink, uint32 _startAt, uint32 _endAt) external {
         require(_startAt >= block.timestamp,"Start time is less than current Block Timestamp");
         require(_endAt > _startAt,"End time is less than Start time");
         require(_endAt <= block.timestamp + maxDuration, "End time exceeds the maximum Duration");
