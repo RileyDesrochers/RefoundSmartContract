@@ -24,6 +24,11 @@ contract RefoundPost is ERC721URIStorage {
     //using Counters for Counters.Counter;
     //Counters.Counter private _tokenIds;
 
+    mapping(address => uint256[]) postIDtoOwner;//for testing only
+    function getPostIDs(address user) public view returns(uint256[] memory) {//for testing only
+        return postIDtoOwner[user];
+    }
+
     mapping(uint8 => uint256) prices;
 
     address public owner;
@@ -63,7 +68,7 @@ contract RefoundPost is ERC721URIStorage {
         // Get the current tokenId, this starts at 0.
         uint256 postID = posts++;
         
-        //postIDtoLicenseType[postID] = 
+        postIDtoOwner[postOwner].push(postID);//for testing only 
 
         string memory tokenURI = string(
             abi.encodePacked(
