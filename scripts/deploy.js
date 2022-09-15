@@ -8,10 +8,26 @@ const hre = require("hardhat");
 
 async function main() {
 
+  const [owner, otherAccount] = await ethers.getSigners();
+
+  const FakeUSDC = await ethers.getContractFactory("fakeUSDC");
+  const fakeUSDC = await FakeUSDC.deploy(owner.address);
+
   const Refound = await ethers.getContractFactory("Refound");
   const refound = await Refound.deploy();
+
+  await fakeUSDC.deployed();
+  const RefoundUSD = await ethers.getContractFactory("RefoundUSD");
+  const refoundUSD = await RefoundUSD.deploy(fakeUSDC.address);
+
+  await refoundUSD.deployed();
+  const FundingPool = await ethers.getContractFactory("FundingPool");
+  const fundingPool = await FundingPool.deploy(refoundUSD.address, 10000);
+
   const RefoundPost = await ethers.getContractFactory("RefoundPost");
-  const refoundPost = await RefoundPost.deploy(refound.address);
+  const refoundPost = await RefoundPost.deploy(refound.address, refoundUSD.address);
+  
+  await fundingPool.deployed();
   await refound.deployed();
   await refound.changeAddresses(refoundPost.address);
   await refoundPost.deployed();
@@ -19,8 +35,13 @@ async function main() {
   await refoundPost.updatePrice(1, 250);
   await refoundPost.updatePrice(2, 1000);
   await refoundPost.updatePrice(3, 20000);
+
   console.log(
-    `Refound contract deployed to ${refound.address} and RefoundPost contract deployed to ${refoundPost.address}`
+    `    FakeUSDC contract deployed to ${fakeUSDC.address}
+    Refound contract deployed to ${refound.address}
+    RefoundUSD contract deployed to ${refoundUSD.address}
+    FundingPool contract deployed to ${fundingPool.address}
+    RefoundPost contract deployed to ${refoundPost.address}`
   );
 }
 

@@ -7,9 +7,12 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 //import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+//import "./ERC2981.sol";
 // We need to import the helper functions from the contract that we copy/pasted.
 
 enum LicenseType{Outright, WebLicense, PrintLicense, SingleUse}
+enum contentInteraction{None, UpVote, DownEote, Report}
 
 struct License{
     //string owner;
@@ -23,12 +26,16 @@ contract RefoundPost is ERC721URIStorage {
     // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
     //using Counters for Counters.Counter;
     //Counters.Counter private _tokenIds;
+    IERC20 currency;
 
     mapping(address => uint256[]) postIDtoOwner;//for testing only
     function getPostIDs(address user) public view returns(uint256[] memory) {//for testing only
         return postIDtoOwner[user];
     }
 
+
+    mapping(uint256 => mapping(address => contentInteraction)) contentInteractions; //tokenID, interactorAddress to contentInteraction
+    mapping(uint256 => address[]) contentInteractionAddresses;
     mapping(uint8 => uint256) prices;
 
     address public owner;
@@ -38,11 +45,12 @@ contract RefoundPost is ERC721URIStorage {
     mapping(address => License[]) buyerAddresstoLicense;
 
     // We need to pass the name of our NFTs token and its symbol.
-    constructor(address _refound) ERC721 ("RefoundPost", "FOUNDP") {
+    constructor(address _refound, address _currency) ERC721 ("RefoundPost", "FOUNDP") {
         owner == msg.sender;
         refound = _refound;
         posts = 0;
         console.log('owner: ', msg.sender);
+        currency = IERC20(_currency);
     }
 
     function updatePrice(uint8 index, uint256 price) public {//FIX needs modifer 
@@ -56,6 +64,15 @@ contract RefoundPost is ERC721URIStorage {
         return prices;
     }
     */
+
+   function getContentInteractionAddresses(uint256 postID) public view returns(address[] memory) {
+        return contentInteractionAddresses[postID];
+    }
+
+   //contentInteractionAddresses[postID]
+   function getContentInteractions(uint256 postID, address user) public view returns(contentInteraction) {
+        return contentInteractions[postID][user];
+    }
 
     function getLicensesByAddress(address user) public view returns(License[] memory) {
         return buyerAddresstoLicense[user];
@@ -88,9 +105,16 @@ contract RefoundPost is ERC721URIStorage {
         return postID;
     }
 
-    function purchaseLicense(/*string memory _owner, */ uint256 postID, uint8 licenseType) public {
+    function interactWithContent(uint256 postID, uint8 interactionType) public {
+        require(interactionType != 0);
+        if(contentInteractions[postID][msg.sender] != contentInteraction(0)){
+            contentInteractionAddresses[postID].push(msg.sender);
+        }
+        contentInteractions[postID][msg.sender] = contentInteraction(interactionType);
+    }
 
-        //FIX add payment
+    function purchaseLicense(/*string memory _owner, */ uint256 postID, uint8 licenseType) public {
+        currency.transferFrom(msg.sender, ownerOf(postID), prices[licenseType]);
         buyerAddresstoLicense[msg.sender].push(License(/*_owner, */postID, LicenseType(licenseType)));
     }
 }
