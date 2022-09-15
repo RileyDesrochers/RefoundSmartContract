@@ -30,6 +30,11 @@ contract FundingPool {
         bool claimed;
     }
 
+    mapping(address => uint256[]) creatorToFundingPool;//for testing only
+    function getFundingPoolsByCreator(address user) public view returns(uint256[] memory) {//for testing only
+        return creatorToFundingPool[user];
+    }
+
     IERC20 public immutable token;
     uint public count;
     uint public maxDuration;
@@ -57,7 +62,9 @@ contract FundingPool {
         maxDuration = _maxDuration;
     }
 
-    function launch(uint _goal, string _title, string _description, string _imageLink, uint32 _startAt, uint32 _endAt) external {
+
+    function launch(uint _goal, string memory _title, string memory _description, string memory _imageLink, uint32 _startAt, uint32 _endAt) external {
+
         require(_startAt >= block.timestamp,"Start time is less than current Block Timestamp");
         require(_endAt > _startAt,"End time is less than Start time");
         require(_endAt <= block.timestamp + maxDuration, "End time exceeds the maximum Duration");
@@ -75,7 +82,7 @@ contract FundingPool {
             claimed: false
         });
 
-        emit Launch(count,msg.sender,_goal,_startAt,_endAt);
+        emit Launch(count,msg.sender,_goal,_title, _description, _imageLink, _startAt,_endAt);
     }
 
     function cancel(uint _id) external {
