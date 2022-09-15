@@ -30,6 +30,11 @@ contract FundingPool {
         bool claimed;
     }
 
+    mapping(address => Campaign[]) creatorToCampaign;//for testing only
+    function getFundingPoolsByCreator(address user) public view returns(Campaign[] memory) {//for testing only
+        return creatorToCampaign[user];
+    }
+
     IERC20 public immutable token;
     uint public count;
     uint public maxDuration;
@@ -56,6 +61,7 @@ contract FundingPool {
         token = IERC20(_token);
         maxDuration = _maxDuration;
     }
+
 
     function launch(uint _goal, string memory _title, string memory _description, string memory _imageLink, uint32 _startAt, uint32 _endAt) external {
         require(_startAt >= block.timestamp,"Start time is less than current Block Timestamp");
