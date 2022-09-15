@@ -30,9 +30,9 @@ contract FundingPool {
         bool claimed;
     }
 
-    mapping(address => uint256[]) creatorToFundingPool;//for testing only
-    function getFundingPoolsByCreator(address user) public view returns(uint256[] memory) {//for testing only
-        return creatorToFundingPool[user];
+    mapping(address => Campaign[]) creatorToCampaign;//for testing only
+    function getFundingPoolsByCreator(address user) public view returns(Campaign[] memory) {//for testing only
+        return creatorToCampaign[user];
     }
 
     IERC20 public immutable token;
