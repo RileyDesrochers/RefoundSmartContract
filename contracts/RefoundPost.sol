@@ -100,7 +100,7 @@ contract RefoundPost is ERC721URIStorage {
         _safeMint(postOwner, postID);
 
         // Set the NFTs data.
-        _setTokenURI(profileID, tokenURI);
+        _setTokenURI(postID, tokenURI);
         console.log("minted post NFT", postID, postOwner, tokenURI);
         return postID;
     }

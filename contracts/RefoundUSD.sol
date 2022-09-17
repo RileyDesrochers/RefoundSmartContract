@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract RefoundUSD is ERC20 {
-    mapping(address => uint256) available;
+    mapping(address => uint256) locked;
 
     IERC20 token;
 
@@ -14,7 +14,7 @@ contract RefoundUSD is ERC20 {
     mapping(address => bool) fundsBeingClaimed;
     mapping(address => uint256) beneficiaryClaimTimestamp;
 
-    uint256 accountLockPeriod = 60*60*24*7; 
+    uint256 accountLockPeriod = 60*60*24*7;
 
     modifier accountNotLocked(address user) {
         require(!fundsBeingClaimed[user], 'this account is being claimed');
@@ -56,6 +56,10 @@ contract RefoundUSD is ERC20 {
         uint256 amount = balanceOf(user);
         _burn(user, amount);
         token.transfer(user, amount);
+    }
+
+    function cancelClaim() public {
+        fundsBeingClaimed[msg.sender] = false;
     }
 
     function openChannel() public {
