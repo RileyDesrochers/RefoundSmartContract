@@ -26,16 +26,21 @@ contract RefoundPost is ERC721URIStorage {
     // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
     //using Counters for Counters.Counter;
     //Counters.Counter private _tokenIds;
-    IERC20 currency;
 
     mapping(address => uint256[]) postIDtoOwner;//for testing only
+    mapping(uint256 => address[]) contentInteractionAddresses;//for testing only
+
     function getPostIDs(address user) public view returns(uint256[] memory) {//for testing only
         return postIDtoOwner[user];
     }
 
+    function getContentInteractionAddresses(uint256 postID) public view returns(address[] memory) {//for testing only
+        return contentInteractionAddresses[postID];
+    }
+
+    IERC20 currency;
 
     mapping(uint256 => mapping(address => contentInteraction)) contentInteractions; //tokenID, interactorAddress to contentInteraction
-    mapping(uint256 => address[]) contentInteractionAddresses;
     mapping(uint8 => uint256) prices;
 
     address public owner;
@@ -57,16 +62,6 @@ contract RefoundPost is ERC721URIStorage {
         //require(msg.sender == owner, 'only owner');//FIX make modifer
         console.log('address of caller: ', msg.sender);
         prices[index] = price;
-    }
-
-    /*
-    function getPrices() public view returns(uint256[] memory){
-        return prices;
-    }
-    */
-
-   function getContentInteractionAddresses(uint256 postID) public view returns(address[] memory) {
-        return contentInteractionAddresses[postID];
     }
 
    //contentInteractionAddresses[postID]

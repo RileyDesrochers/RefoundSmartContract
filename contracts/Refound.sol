@@ -10,21 +10,37 @@ import "hardhat/console.sol";
 import "contracts/RefoundPost.sol";
 // We need to import the helper functions from the contract that we copy/pasted.
 
+enum verificationLevel{None, Trusted, Verified}
+
 // We inherit the contract we imported. This means we'll have access
 // to the inherited contract's methods.
 contract Refound is ERC721URIStorage {
     // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
     //using Counters for Counters.Counter;
     //Counters.Counter private _tokenIds;
+    
+    mapping(bytes32 => uint256) UserIdbyHandle;//for testing only
+
+    function getUserIdbyHandle(string memory handle) public view returns(uint256){//for testing only
+        bytes32 h = keccak256(abi.encode(handle));
+        return UserIdbyHandle[h];
+    }
+    
     uint256 public profiles;
     address public owner;
     RefoundPost public postContract;
-    //address public mediaData;
+
+    mapping(uint256 => verificationLevel) userVerificationLevel;
 
     // We need to pass the name of our NFTs token and its symbol.
     constructor() ERC721 ("RefoundUser", "FOUNDU") {
         profiles = 0;
         owner = msg.sender;
+    }
+
+    function changeUserVerificationLevel(uint256 profileID, uint8 level) external {
+        require(owner == msg.sender, "only the contract owner can call this function");//FIX make modifer
+        userVerificationLevel[profileID] = verificationLevel(level);
     }
 
     function changeAddresses(address _postContract/*, address _mediaData*/) external {
@@ -37,6 +53,8 @@ contract Refound is ERC721URIStorage {
         require(bytes(handle).length < 200, "handle to long");
         // Get the current tokenId, this starts at 0.
         uint256 profileID = profiles++;
+
+        UserIdbyHandle[keccak256(abi.encode(handle))] = profileID;//for testing only
         
         string memory tokenURI = string(
             abi.encodePacked(
