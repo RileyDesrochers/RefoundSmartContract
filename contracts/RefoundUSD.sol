@@ -19,7 +19,6 @@ contract RefoundUSD is ERC20, Ownable {
     uint256 subscriptionPeriod = 60*60*24*30;
     uint256 subscriptionAmount = 5*(10**18);
     uint256 subsciptionStartTime;
-    //address owner;
     address[] subsciptionRecivers;
     mapping(address => bool) subsciptionReciversMap;
     mapping(address => address[]) subscriptions;//Reciver to payee
@@ -36,7 +35,6 @@ contract RefoundUSD is ERC20, Ownable {
     constructor(address _token) ERC20("RefoundUSD", "RUSD") {
         token = IERC20(_token);
         subsciptionStartTime = block.timestamp;
-        //owner = msg.sender;
         subsciptionReciverInedx = 0;
         subscriptionsInedx = 0;
         SubsciptionsLocked = false;
@@ -87,19 +85,19 @@ contract RefoundUSD is ERC20, Ownable {
     function subscribe(address reciver) public {
         require(subsciptionReciversMap[msg.sender] == true, "this user need to call addSubsciptionReciver for you to subscribe to them");
         require(!SubsciptionsLocked);
-        //transfer(reciver, subscriptionAmount);//pay amount for this subscription period
+        transfer(reciver, subscriptionAmount);//pay amount for this subscription period
         subscriptions[reciver].push(msg.sender);
     }
 
     function unSubscribe(address reciver, uint64 index) public {
         require(!SubsciptionsLocked);
         require(subscriptions[reciver][index] ==  msg.sender);
-        address last = subscriptions[reciver][subscriptions[reciver].length];
+        address last = subscriptions[reciver][subscriptions[reciver].length - 1];
         subscriptions[reciver][index] = last;
         subscriptions[reciver].pop();
     }
 
-    function incrementSubsciptionPeriod() public onlyOwner() {
+    function incrementSubsciptionPeriod() public onlyOwner() {//once all payment are done 
         require(SubsciptionsLocked);
         require(subsciptionReciverInedx > subsciptionRecivers.length);
         subsciptionStartTime += subscriptionPeriod;
@@ -121,10 +119,10 @@ contract RefoundUSD is ERC20, Ownable {
                 reciver = subsciptionRecivers[subsciptionReciverInedxTmp];
             }
             address sender = subscriptions[reciver][subscriptionsInedxTmp];
-            /*if(sender == address(0)){no longer needed
+            if(sender == address(0)){//make sure its not the 0 address
                 subscriptionsInedxTmp++;
                 continue;
-            }*/
+            }
             if(balanceOf(sender) < subscriptionAmount){//force unsubscribe if user cant afford
                 subscriptions[reciver][subscriptionsInedxTmp] = address(0);
             }else{
@@ -137,7 +135,7 @@ contract RefoundUSD is ERC20, Ownable {
         subscriptionsInedx = subscriptionsInedxTmp;//for gas savings
     }
 
-    function lockForSubsciptionPayments() public onlyOwner() {
+    function lockForSubsciptionPayments() public onlyOwner() {//need to lock before we start transfering payments
         require(block.timestamp > subsciptionStartTime + subscriptionPeriod);
         SubsciptionsLocked = true;
     }
@@ -177,17 +175,6 @@ contract RefoundUSD is ERC20, Ownable {
         }
 
         emit Transfer(from, to, amount);
-    }
-
-    function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: mint to the zero address");
-
-        _totalSupply += amount;
-        unchecked {
-            // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
-            _balances[account] += amount;
-        }
-        emit Transfer(address(0), account, amount);
     }
 
     function _burn(address account, uint256 amount) internal virtual {

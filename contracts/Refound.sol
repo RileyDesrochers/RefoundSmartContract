@@ -2,33 +2,18 @@
 
 pragma solidity ^0.8.0;
 
-// We first import some OpenZeppelin Contracts.
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 //import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 import "contracts/RefoundPost.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-// We need to import the helper functions from the contract that we copy/pasted.
 
 enum verificationLevel{None, Trusted, Verified}
 
-// We inherit the contract we imported. This means we'll have access
-// to the inherited contract's methods.
 contract Refound is ERC721URIStorage, Ownable {
-    // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
-    //using Counters for Counters.Counter;
-    //Counters.Counter private _tokenIds;
-    
-    mapping(bytes32 => uint256) UserIdbyHandle;//for testing only
-
-    function getUserIdbyHandle(string memory handle) public view returns(uint256){//for testing only
-        bytes32 h = keccak256(abi.encode(handle));
-        return UserIdbyHandle[h];
-    }
     
     uint256 public profiles;
-    //address public owner;
     RefoundPost public postContract;
 
     mapping(uint256 => verificationLevel) userVerificationLevel;
@@ -36,18 +21,16 @@ contract Refound is ERC721URIStorage, Ownable {
     // We need to pass the name of our NFTs token and its symbol.
     constructor() ERC721 ("RefoundUser", "FOUNDU") {
         profiles = 0;
-        //owner = msg.sender;
     }
 
     function changeUserVerificationLevel(uint256 profileID, uint8 level) external onlyOwner() {
         userVerificationLevel[profileID] = verificationLevel(level);
     }
 
-    function changeAddresses(address _postContract/*, address _mediaData*/) external onlyOwner() {
+    function changeAddresses(address _postContract) external onlyOwner() {
         postContract = RefoundPost(_postContract);
     }
 
-    // A function our user will hit to get their NFT.
     function makeRefoundProfile(string memory handle, string memory profileData) public returns(uint256){
         require(bytes(handle).length < 200, "handle to long");
         // Get the current tokenId, this starts at 0.
@@ -74,7 +57,19 @@ contract Refound is ERC721URIStorage, Ownable {
     }
 
     function makeRefoundPost(uint256 profileID, string memory postData) public returns(uint256){
-        require(this.ownerOf(profileID) == msg.sender, 'you need two own a profile to make a post from it');
-        return postContract.makeRefoundPost(profileID, postData, msg.sender);//FIX how does this contract know what the others address is?
+        require(ownerOf(profileID) == msg.sender, 'you need two own a profile to make a post from it');
+        return postContract.makeRefoundPost(profileID, postData, msg.sender);
+    }
+
+    //--------------------------------------------------------------------------
+
+    //using Counters for Counters.Counter;
+    //Counters.Counter private _tokenIds;
+    
+    mapping(bytes32 => uint256) UserIdbyHandle;//for testing only
+
+    function getUserIdbyHandle(string memory handle) public view returns(uint256){//for testing only
+        bytes32 h = keccak256(abi.encode(handle));
+        return UserIdbyHandle[h];
     }
 }
