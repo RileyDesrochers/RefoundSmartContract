@@ -8,13 +8,14 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 import "contracts/RefoundPost.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 // We need to import the helper functions from the contract that we copy/pasted.
 
 enum verificationLevel{None, Trusted, Verified}
 
 // We inherit the contract we imported. This means we'll have access
 // to the inherited contract's methods.
-contract Refound is ERC721URIStorage {
+contract Refound is ERC721URIStorage, Ownable {
     // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
     //using Counters for Counters.Counter;
     //Counters.Counter private _tokenIds;
@@ -27,7 +28,7 @@ contract Refound is ERC721URIStorage {
     }
     
     uint256 public profiles;
-    address public owner;
+    //address public owner;
     RefoundPost public postContract;
 
     mapping(uint256 => verificationLevel) userVerificationLevel;
@@ -35,16 +36,14 @@ contract Refound is ERC721URIStorage {
     // We need to pass the name of our NFTs token and its symbol.
     constructor() ERC721 ("RefoundUser", "FOUNDU") {
         profiles = 0;
-        owner = msg.sender;
+        //owner = msg.sender;
     }
 
-    function changeUserVerificationLevel(uint256 profileID, uint8 level) external {
-        require(owner == msg.sender, "only the contract owner can call this function");//FIX make modifer
+    function changeUserVerificationLevel(uint256 profileID, uint8 level) external onlyOwner() {
         userVerificationLevel[profileID] = verificationLevel(level);
     }
 
-    function changeAddresses(address _postContract/*, address _mediaData*/) external {
-        require(owner == msg.sender, "only the contract owner can call this function");//FIX make modifer
+    function changeAddresses(address _postContract/*, address _mediaData*/) external onlyOwner() {
         postContract = RefoundPost(_postContract);
     }
 

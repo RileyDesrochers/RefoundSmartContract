@@ -4,8 +4,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract RefoundUSD is ERC20 {
+contract RefoundUSD is ERC20, Ownable {
     //mapping(address => uint256) locked;
 
     IERC20 token;
@@ -18,7 +19,7 @@ contract RefoundUSD is ERC20 {
     uint256 subscriptionPeriod = 60*60*24*30;
     uint256 subscriptionAmount = 5*(10**18);
     uint256 subsciptionStartTime;
-    address owner;
+    //address owner;
     address[] subsciptionRecivers;
     mapping(address => bool) subsciptionReciversMap;
     mapping(address => address[]) subscriptions;//Reciver to payee
@@ -35,7 +36,7 @@ contract RefoundUSD is ERC20 {
     constructor(address _token) ERC20("RefoundUSD", "RUSD") {
         token = IERC20(_token);
         subsciptionStartTime = block.timestamp;
-        owner = msg.sender;
+        //owner = msg.sender;
         subsciptionReciverInedx = 0;
         subscriptionsInedx = 0;
         SubsciptionsLocked = false;
@@ -98,8 +99,7 @@ contract RefoundUSD is ERC20 {
         subscriptions[reciver].pop();
     }
 
-    function incrementSubsciptionPeriod() public {
-        require(msg.sender == owner);
+    function incrementSubsciptionPeriod() public onlyOwner() {
         require(SubsciptionsLocked);
         require(subsciptionReciverInedx > subsciptionRecivers.length);
         subsciptionStartTime += subscriptionPeriod;
@@ -107,8 +107,7 @@ contract RefoundUSD is ERC20 {
         SubsciptionsLocked = false;
     }
 
-    function _incrementSubsciptionPeriod(uint8 times) public {//does times number of transfers call this function till they are all done
-        require(msg.sender == owner);
+    function _incrementSubsciptionPeriod(uint8 times) public onlyOwner() {//does times number of transfers call this function till they are all done
         require(SubsciptionsLocked);
         uint256 subsciptionReciverInedxTmp = subsciptionReciverInedx;//for gas savings
         uint256 subscriptionsInedxTmp = subscriptionsInedx;//for gas savings
@@ -138,8 +137,7 @@ contract RefoundUSD is ERC20 {
         subscriptionsInedx = subscriptionsInedxTmp;//for gas savings
     }
 
-    function lockForSubsciptionPayments() public {
-        require(msg.sender == owner);
+    function lockForSubsciptionPayments() public onlyOwner() {
         require(block.timestamp > subsciptionStartTime + subscriptionPeriod);
         SubsciptionsLocked = true;
     }

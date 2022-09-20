@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 //import "./ERC2981.sol";
 //import "./IERC2981.sol";
 //import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -26,47 +28,29 @@ struct License{
 
 // We inherit the contract we imported. This means we'll have access
 // to the inherited contract's methods.
-contract RefoundPost is ERC721URIStorage, ERC2981 {
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC2981) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-    //using Counters for Counters.Counter;
-    //Counters.Counter private _tokenIds;
-
-    mapping(address => uint256[]) postIDtoOwner;//for testing only
-    mapping(uint256 => address[]) contentInteractionAddresses;//for testing only
-
-    function getPostIDs(address user) public view returns(uint256[] memory) {//for testing only
-        return postIDtoOwner[user];
-    }
-
-    function getContentInteractionAddresses(uint256 postID) public view returns(address[] memory) {//for testing only
-        return contentInteractionAddresses[postID];
-    }
-
+contract RefoundPost is ERC721URIStorage, ERC2981, Ownable {
     IERC20 currency;
 
     mapping(uint256 => mapping(address => contentInteraction)) contentInteractions; //tokenID, interactorAddress to contentInteraction
     mapping(uint8 => uint256) prices;
 
-    address public owner;
+    //address public owner;
     uint256 public posts;
     address public refound;
-
     mapping(address => License[]) buyerAddresstoLicense;
 
     // We need to pass the name of our NFTs token and its symbol.
     constructor(address _refound, address _currency) ERC721 ("RefoundPost", "FOUNDP") {
-        owner == msg.sender;
+        //owner == msg.sender;
         refound = _refound;
         posts = 0;
-        console.log('owner: ', msg.sender);
+        //console.log('owner: ', msg.sender);
         currency = IERC20(_currency);
     }
 
-    function updatePrice(uint8 index, uint256 price) public {//FIX needs modifer 
+    function updatePrice(uint8 index, uint256 price) public onlyOwner() {//FIX needs modifer 
         //require(msg.sender == owner, 'only owner');//FIX make modifer
-        console.log('address of caller: ', msg.sender);
+        //console.log('address of caller: ', msg.sender);
         prices[index] = price;
     }
 
@@ -118,4 +102,24 @@ contract RefoundPost is ERC721URIStorage, ERC2981 {
         currency.transferFrom(msg.sender, ownerOf(postID), prices[licenseType]);
         buyerAddresstoLicense[msg.sender].push(License(/*_owner, */postID, LicenseType(licenseType)));
     }
+
+    //-------------------------------------------------------------------------------------
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC2981) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+    //using Counters for Counters.Counter;
+    //Counters.Counter private _tokenIds;
+
+    mapping(address => uint256[]) postIDtoOwner;//for testing only
+    mapping(uint256 => address[]) contentInteractionAddresses;//for testing only
+
+    function getPostIDs(address user) public view returns(uint256[] memory) {//for testing only
+        return postIDtoOwner[user];
+    }
+
+    function getContentInteractionAddresses(uint256 postID) public view returns(address[] memory) {//for testing only
+        return contentInteractionAddresses[postID];
+    }
+
 }
