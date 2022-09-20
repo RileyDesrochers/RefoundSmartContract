@@ -22,7 +22,6 @@ contract RefoundUSD is ERC20 {
     address[] subsciptionRecivers;
     mapping(address => bool) subsciptionReciversMap;
     mapping(address => address[]) subscriptions;//Reciver to payee
-    mapping(address => mapping(address => bool)) subsciptionReciversCanClaimPayment;//Reciver, Payee to can funds be claimed
 
     uint256 subsciptionReciverInedx;
     uint256 subscriptionsInedx;
@@ -67,8 +66,6 @@ contract RefoundUSD is ERC20 {
         require(beneficiary[user] == msg.sender, 'this user has not made you his beneficiary');
         require(fundsBeingClaimed[user] == true, 'you need to use startBeneficiaryClaimFunds first');
         require(beneficiaryClaimTimestamp[user] < block.timestamp, 'you need to wait till LockPeriod is over');
-        
-        //FIX unlock all locked tokens
 
         uint256 amount = balanceOf(user);
         _burn(user, amount);
@@ -96,7 +93,9 @@ contract RefoundUSD is ERC20 {
     function unSubscribe(address reciver, uint64 index) public {
         require(!SubsciptionsLocked);
         require(subscriptions[reciver][index] ==  msg.sender);
-        subscriptions[reciver][index] = address(0);
+        address last = subscriptions[reciver][subscriptions[reciver].length];
+        subscriptions[reciver][index] = last;
+        subscriptions[reciver].pop();
     }
 
     function incrementSubsciptionPeriod() public {
@@ -108,35 +107,35 @@ contract RefoundUSD is ERC20 {
         SubsciptionsLocked = false;
     }
 
-    function _incrementSubsciptionPeriod(uint8 times) public {
+    function _incrementSubsciptionPeriod(uint8 times) public {//does times number of transfers call this function till they are all done
         require(msg.sender == owner);
         require(SubsciptionsLocked);
-        uint256 subsciptionReciverInedxTmp = subsciptionReciverInedx;
-        uint256 subscriptionsInedxTmp = subscriptionsInedx;
-        require(subsciptionReciverInedxTmp <= subsciptionRecivers.length, 'your done');
+        uint256 subsciptionReciverInedxTmp = subsciptionReciverInedx;//for gas savings
+        uint256 subscriptionsInedxTmp = subscriptionsInedx;//for gas savings
+        require(subsciptionReciverInedxTmp < subsciptionRecivers.length, 'your done');//this will let you know when you finished all the transfers
         address reciver = subsciptionRecivers[subsciptionReciverInedxTmp];
         for(uint8 i = 0; i<times; i++){
-            if(subscriptionsInedxTmp >= subscriptions[reciver].length){
+            if(subscriptionsInedxTmp >= subscriptions[reciver].length){//reached the end of this users subscriptions start on the next one
                 subscriptionsInedxTmp = 0;
                 subsciptionReciverInedxTmp++;
-                if(subsciptionReciverInedxTmp > subsciptionRecivers.length){break;}
+                if(subsciptionReciverInedxTmp >= subsciptionRecivers.length){break;}//all transactions are done 
                 reciver = subsciptionRecivers[subsciptionReciverInedxTmp];
             }
             address sender = subscriptions[reciver][subscriptionsInedxTmp];
-            if(sender == address(0)){
+            /*if(sender == address(0)){no longer needed
                 subscriptionsInedxTmp++;
                 continue;
-            }
+            }*/
             if(balanceOf(sender) < subscriptionAmount){//force unsubscribe if user cant afford
                 subscriptions[reciver][subscriptionsInedxTmp] = address(0);
             }else{
-                _transfer(sender, reciver, subscriptionAmount);
+                _transfer(sender, reciver, subscriptionAmount);//make subscription payment
             }
             subscriptionsInedxTmp++;
-                continue;
+            continue;
         }  
-        subsciptionReciverInedx = subsciptionReciverInedxTmp;
-        subscriptionsInedx = subscriptionsInedxTmp;
+        subsciptionReciverInedx = subsciptionReciverInedxTmp;//for gas savings
+        subscriptionsInedx = subscriptionsInedxTmp;//for gas savings
     }
 
     function lockForSubsciptionPayments() public {
@@ -144,51 +143,6 @@ contract RefoundUSD is ERC20 {
         require(block.timestamp > subsciptionStartTime + subscriptionPeriod);
         SubsciptionsLocked = true;
     }
-    /*
-    function incrementSubsciptionStartTime() public {
-        require(msg.sender = owner);
-        require(block.timestamp > subsciptionStartTime + subscriptionPeriod);
-        subsciptionStartTime += subscriptionPeriod;
-        //also need to reset all subsciptionReciversCanClaimPayment
-    }
-
-    function resetSubsciptionReciversCanClaimPayment(address reciver, address[] senders) public {
-        require(msg.sender = owner);
-        for(uint8 i = 0; i < senders.length; i++){
-            _resetSubsciptionReciversCanClaimPayment(reciver, senders[i]);
-        }
-    }
-
-    function _resetSubsciptionReciversCanClaimPayment(address reciver, address sender) internal {
-        subsciptionReciversCanClaimPayment[reciver][sender] = 1;
-    }
-
-    function addSubsciptionReciver(address reciver) public {
-        require(msg.sender = owner);
-        subsciptionRecivers.push(reciver);
-    }
-
-    function getSubsciptionRecivers() public returns(address[]){
-        return subsciptionRecivers;
-    }
-
-    function subscribe(address reciver) public {
-        transfer(reciver, subscriptionAmount);//pay amount for this subscription period
-        subscriptions[reciver].push(msg.sender);
-    }
-
-    function claimSubscriptions(address[] senders) internal {
-        for(uint8 i = 0; i < senders.length; i++){
-            _claimSubscription(senders[i]);
-        }
-    }
-
-    function _claimSubscription(address sender) internal {
-        require(subsciptionReciversCanClaimPayment[msg.sender][sender], 'funds cannot be claimed by this user');
-        _transfer(sender, msg.sender, subscriptionAmount);
-        subsciptionReciversCanClaimPayment[msg.sender][sender]=0;
-    }
-    /*
 
     /*
     function openChannel() public {
