@@ -18,6 +18,8 @@ contract Refound is ERC721URIStorage, Ownable {
 
     mapping(uint256 => verificationLevel) userVerificationLevel;
 
+    event madeProfile(uint256 profileID, string handle);
+
     // We need to pass the name of our NFTs token and its symbol.
     constructor() ERC721 ("RefoundUser", "FOUNDU") {
         profiles = 0;
@@ -31,7 +33,7 @@ contract Refound is ERC721URIStorage, Ownable {
         postContract = RefoundPost(_postContract);
     }
 
-    function makeRefoundProfile(string memory handle, string memory profileData) public returns(uint256){
+    function makeRefoundProfile(string memory handle, string memory profileData) public {
         require(bytes(handle).length < 200, "handle to long");
         // Get the current tokenId, this starts at 0.
         uint256 profileID = profiles++;
@@ -52,13 +54,12 @@ contract Refound is ERC721URIStorage, Ownable {
 
         // Set the NFTs data.
         _setTokenURI(profileID, tokenURI);
-        console.log("minted Profile NFT", profileID, msg.sender, tokenURI);
-        return profileID;
+        emit madeProfile(profileID, handle);
     }
 
-    function makeRefoundPost(uint256 profileID, string memory postData) public returns(uint256){
+    function makeRefoundPost(uint256 profileID, string memory postData) public {
         require(ownerOf(profileID) == msg.sender, 'you need two own a profile to make a post from it');
-        return postContract.makeRefoundPost(profileID, postData, msg.sender);
+        postContract.makeRefoundPost(profileID, postData, msg.sender);
     }
 
     //--------------------------------------------------------------------------

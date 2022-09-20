@@ -31,6 +31,8 @@ contract RefoundPost is ERC721URIStorage, ERC2981, Ownable {
     address public refound;
     mapping(address => License[]) buyerAddresstoLicense;
 
+    event madePost(uint256 profileID, uint256 postID);
+
     // We need to pass the name of our NFTs token and its symbol.
     constructor(address _refound, address _currency) ERC721 ("RefoundPost", "FOUNDP") {
         refound = _refound;
@@ -51,7 +53,7 @@ contract RefoundPost is ERC721URIStorage, ERC2981, Ownable {
     }
 
     // A function our user will hit to get their NFT.
-    function makeRefoundPost(uint256 profileID, string memory postData, address postOwner) external returns(uint256){
+    function makeRefoundPost(uint256 profileID, string memory postData, address postOwner) external {
         require(msg.sender == refound, "only the refound contract can make a post");//FIX this and turn into modifier
 
         // Get the current tokenId, this starts at 0.
@@ -73,8 +75,8 @@ contract RefoundPost is ERC721URIStorage, ERC2981, Ownable {
 
         // Set the NFTs data.
         _setTokenURI(postID, tokenURI);
-        console.log("minted post NFT", postID, postOwner, tokenURI);
-        return postID;
+        //console.log("minted post NFT", postID, postOwner, tokenURI);
+        emit madePost(profileID, postID);
     }
 
     function interactWithContent(uint256 postID, uint8 interactionType) public {
