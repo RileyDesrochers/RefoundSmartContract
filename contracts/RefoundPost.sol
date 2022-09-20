@@ -4,11 +4,15 @@ pragma solidity ^0.8.0;
 
 // We first import some OpenZeppelin Contracts.
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 //import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 //import "./ERC2981.sol";
+//import "./IERC2981.sol";
+//import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 // We need to import the helper functions from the contract that we copy/pasted.
 
 enum LicenseType{Outright, WebLicense, PrintLicense, SingleUse}
@@ -22,8 +26,10 @@ struct License{
 
 // We inherit the contract we imported. This means we'll have access
 // to the inherited contract's methods.
-contract RefoundPost is ERC721URIStorage {
-    // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
+contract RefoundPost is ERC721URIStorage, ERC2981 {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC2981) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
     //using Counters for Counters.Counter;
     //Counters.Counter private _tokenIds;
 
