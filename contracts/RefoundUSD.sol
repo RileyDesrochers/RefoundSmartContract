@@ -18,14 +18,14 @@ contract RefoundUSD is ERC20, Ownable {
     uint256 accountLockPeriod = 60*60*24*7;
     uint256 subscriptionPeriod = 60*60*24*30;
     uint256 subscriptionAmount = 5*(10**18);
-    uint256 subsciptionStartTime;
-    address[] subsciptionRecivers;
-    mapping(address => bool) subsciptionReciversMap;
+    uint256 subscriptionStartTime;
+    address[] subscriptionRecivers;
+    mapping(address => bool) subscriptionReciversMap;
     mapping(address => address[]) subscriptions;//Reciver to payee
 
-    uint256 subsciptionReciverInedx;
+    uint256 subscriptionReciverInedx;
     uint256 subscriptionsInedx;
-    bool SubsciptionsLocked;
+    bool SubscriptionsLocked;
 
     modifier accountNotLocked(address user) {
         require(!fundsBeingClaimed[user], 'this account is being claimed');
@@ -34,10 +34,10 @@ contract RefoundUSD is ERC20, Ownable {
 
     constructor(address _token) ERC20("RefoundUSD", "RUSD") {
         token = IERC20(_token);
-        subsciptionStartTime = block.timestamp;
-        subsciptionReciverInedx = 0;
+        subscriptionStartTime = block.timestamp;
+        subscriptionReciverInedx = 0;
         subscriptionsInedx = 0;
-        SubsciptionsLocked = false;
+        SubscriptionsLocked = false;
     }
 
     function deposit(uint256 amount) public accountNotLocked(msg.sender) {
@@ -75,48 +75,48 @@ contract RefoundUSD is ERC20, Ownable {
         fundsBeingClaimed[msg.sender] = false;
     }
 
-    function addSubsciptionReciver(address reciver) public {
-        require(subsciptionReciversMap[msg.sender] == false);
-        require(!SubsciptionsLocked);
-        subsciptionReciversMap[msg.sender] == true;
-        subsciptionRecivers.push(reciver);
+    function addSubscriptionReciver(address reciver) public {
+        require(subscriptionReciversMap[msg.sender] == false);
+        require(!SubscriptionsLocked);
+        subscriptionReciversMap[msg.sender] == true;
+        subscriptionRecivers.push(reciver);
     }
 
     function subscribe(address reciver) public {
-        require(subsciptionReciversMap[msg.sender] == true, "this user need to call addSubsciptionReciver for you to subscribe to them");
-        require(!SubsciptionsLocked);
+        require(subscriptionReciversMap[msg.sender] == true, "this user need to call addSubscriptionReciver for you to subscribe to them");
+        require(!SubscriptionsLocked);
         transfer(reciver, subscriptionAmount);//pay amount for this subscription period
         subscriptions[reciver].push(msg.sender);
     }
 
     function unSubscribe(address reciver, uint64 index) public {
-        require(!SubsciptionsLocked);
+        require(!SubscriptionsLocked);
         require(subscriptions[reciver][index] ==  msg.sender);
         address last = subscriptions[reciver][subscriptions[reciver].length - 1];
         subscriptions[reciver][index] = last;
         subscriptions[reciver].pop();
     }
 
-    function incrementSubsciptionPeriod() public onlyOwner() {//once all payment are done 
-        require(SubsciptionsLocked);
-        require(subsciptionReciverInedx > subsciptionRecivers.length);
-        subsciptionStartTime += subscriptionPeriod;
-        subsciptionReciverInedx = 0;
-        SubsciptionsLocked = false;
+    function incrementSubscriptionPeriod() public onlyOwner() {//once all payment are done 
+        require(SubscriptionsLocked);
+        require(subscriptionReciverInedx > subscriptionRecivers.length);
+        subscriptionStartTime += subscriptionPeriod;
+        subscriptionReciverInedx = 0;
+        SubscriptionsLocked = false;
     }
 
-    function _incrementSubsciptionPeriod(uint8 times) public onlyOwner() {//does times number of transfers call this function till they are all done
-        require(SubsciptionsLocked);
-        uint256 subsciptionReciverInedxTmp = subsciptionReciverInedx;//for gas savings
+    function _incrementSubscriptionPeriod(uint8 times) public onlyOwner() {//does times number of transfers call this function till they are all done
+        require(SubscriptionsLocked);
+        uint256 subscriptionReciverInedxTmp = subscriptionReciverInedx;//for gas savings
         uint256 subscriptionsInedxTmp = subscriptionsInedx;//for gas savings
-        require(subsciptionReciverInedxTmp < subsciptionRecivers.length, 'your done');//this will let you know when you finished all the transfers
-        address reciver = subsciptionRecivers[subsciptionReciverInedxTmp];
+        require(subscriptionReciverInedxTmp < subscriptionRecivers.length, 'your done');//this will let you know when you finished all the transfers
+        address reciver = subscriptionRecivers[subscriptionReciverInedxTmp];
         for(uint8 i = 0; i<times; i++){
             if(subscriptionsInedxTmp >= subscriptions[reciver].length){//reached the end of this users subscriptions start on the next one
                 subscriptionsInedxTmp = 0;
-                subsciptionReciverInedxTmp++;
-                if(subsciptionReciverInedxTmp >= subsciptionRecivers.length){break;}//all transactions are done 
-                reciver = subsciptionRecivers[subsciptionReciverInedxTmp];
+                subscriptionReciverInedxTmp++;
+                if(subscriptionReciverInedxTmp >= subscriptionRecivers.length){break;}//all transactions are done 
+                reciver = subscriptionRecivers[subscriptionReciverInedxTmp];
             }
             address sender = subscriptions[reciver][subscriptionsInedxTmp];
             if(sender == address(0)){//make sure its not the 0 address
@@ -131,13 +131,13 @@ contract RefoundUSD is ERC20, Ownable {
             subscriptionsInedxTmp++;
             continue;
         }  
-        subsciptionReciverInedx = subsciptionReciverInedxTmp;//for gas savings
+        subscriptionReciverInedx = subscriptionReciverInedxTmp;//for gas savings
         subscriptionsInedx = subscriptionsInedxTmp;//for gas savings
     }
 
-    function lockForSubsciptionPayments() public onlyOwner() {//need to lock before we start transfering payments
-        require(block.timestamp > subsciptionStartTime + subscriptionPeriod);
-        SubsciptionsLocked = true;
+    function lockForSubscriptionPayments() public onlyOwner() {//need to lock before we start transfering payments
+        require(block.timestamp > subscriptionStartTime + subscriptionPeriod);
+        SubscriptionsLocked = true;
     }
 
     /*
