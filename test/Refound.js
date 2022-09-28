@@ -12,10 +12,12 @@ const {
     async function deployContract() {
     
       // Contracts are deployed using the first signer/account by default
+      //var supply = 10000 * 10^18;
+
       const [owner] = await ethers.getSigners();
 
       const FakeUSDC = await ethers.getContractFactory("fakeUSDC");
-      const fakeUSDC = await FakeUSDC.deploy(owner.address);
+      const fakeUSDC = await FakeUSDC.deploy(1000000000);
     
       const Refound = await ethers.getContractFactory("Refound");
       const refound = await Refound.deploy();
@@ -38,11 +40,10 @@ const {
       await refoundPost.updatePrice(0, 100);
       await refoundPost.updatePrice(1, 250);
       await refoundPost.updatePrice(2, 1000);
-      await refoundPost.updatePrice(3, 20000);
 
       console.log('contract deployed')
       //console.log('addresses: ', owner.address, ', ', otherAccount.address)
-      return {refound, refoundPost, owner};
+      return {refound, refoundPost, owner, fakeUSDC, refoundUSD};
     }
   
     describe("DeployContract", function () {
@@ -72,6 +73,17 @@ const {
         await refound.makeRefoundPost(0, "{(ツ)}");//tokenURI
         expect(await refoundPost.posts()).to.equal(1);
         expect(await refoundPost.tokenURI(0)).to.equal('{"posterID": 0, "postData": {(ツ)}}');
+      });
+    });
+    describe("DepositAndWithdrawal", function () {
+      it("test deposits and withdrawals", async function () {
+        const {refound, refoundPost, owner, fakeUSDC, refoundUSD} = await loadFixture(deployContract);
+        await fakeUSDC.approve(refoundUSD.address, 1000000000);
+        await refoundUSD.deposit(1000000000);
+        expect(await refoundUSD.balanceOf(owner.address)).to.equal(1000000000);
+        await refoundUSD.withdrawal(100000000);
+        expect(await refoundUSD.balanceOf(owner.address)).to.equal(900000000);
+        expect(await fakeUSDC.balanceOf(owner.address)).to.equal(100000000);
       });
     });
     /*
