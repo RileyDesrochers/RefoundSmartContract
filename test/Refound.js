@@ -43,7 +43,7 @@ const {
 
       console.log('contract deployed')
       //console.log('addresses: ', owner.address, ', ', otherAccount.address)
-      return {refound, refoundPost, owner, fakeUSDC, refoundUSD};
+      return {refound, refoundPost, fakeUSDC, refoundUSD};
     }
   
     describe("DeployContract", function () {
@@ -77,13 +77,25 @@ const {
     });
     describe("DepositAndWithdrawal", function () {
       it("test deposits and withdrawals", async function () {
-        const {refound, refoundPost, owner, fakeUSDC, refoundUSD} = await loadFixture(deployContract);
+        const {refound, refoundPost, fakeUSDC, refoundUSD} = await loadFixture(deployContract);
+        const [owner, otherAccount] = await ethers.getSigners();
         await fakeUSDC.approve(refoundUSD.address, 1000000000);
         await refoundUSD.deposit(1000000000);
         expect(await refoundUSD.balanceOf(owner.address)).to.equal(1000000000);
         await refoundUSD.withdrawal(100000000);
-        expect(await refoundUSD.balanceOf(owner.address)).to.equal(900000000);
+        await refoundUSD.transfer(otherAccount.address, 100000000);
+        expect(await refoundUSD.balanceOf(owner.address)).to.equal(800000000);
         expect(await fakeUSDC.balanceOf(owner.address)).to.equal(100000000);
+        
+        
+        await refound.makeRefoundProfile("profileName", "{(ツ)}");
+        await refound.makeRefoundPost(0, "{(ツ)}");
+        await refoundUSD.connect(otherAccount).approve(refoundPost.address, 1000000000);
+        await refoundPost.connect(otherAccount).purchaseLicense(0, 1);
+
+        expect(await refoundUSD.balanceOf(owner.address)).to.equal(800000000 + 250);
+        expect(await refoundUSD.balanceOf(otherAccount.address)).to.equal(100000000 - 250);
+
       });
     });
     /*
